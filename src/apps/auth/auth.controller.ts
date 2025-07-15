@@ -20,8 +20,14 @@ export class AuthController {
 
   }
 
-  @Post('callback')
-  async handleCallback(@Body('code') code: string, @Res() res: Response) {
+  @Get('callback')
+  async handleCallbackGet(@Query('code') code: string, @Res() res: Response) {
+    const tokens = await this.authService.getToken(code);
+    return res.json(tokens);
+  }
+
+    @Post('callback')
+  async handleCallbackPost(@Body('code') code: string, @Res() res: Response) {
     try {
       const tokens = await this.authService.getToken(code);
       return res.json(tokens);
@@ -30,6 +36,7 @@ export class AuthController {
       return res.status(500).json({ error: 'Erro ao trocar código por token' });
     }
   }
+
 
 
 }
