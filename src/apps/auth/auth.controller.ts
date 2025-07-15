@@ -13,55 +13,52 @@ interface SpotifyUser {
 export class AuthController {
 
   @Get('callback')
-  async handleCallback(@Query('code') code: string, @Query('state') state: string, @Res() res: Response) {
-    try {
-      if (!code) {
-        return res.status(400).json({ error: 'Código não fornecido' });
-      }
-
-      console.log('Código recebido no callback:', code);
-      
-      // Redirecionar para o app com o código
-      const deepLink = `musicbox://callback?code=${code}&state=${state}`;
-      
-      // Página HTML que redireciona
-      const html = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>Autenticação Spotify</title>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1">
-          <style>
-            body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
-            .container { max-width: 400px; margin: 0 auto; }
-            .success { color: #28a745; }
-            .loading { color: #007bff; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <h1 class="success">✅ Autenticação realizada!</h1>
-            <p class="loading">Redirecionando para o aplicativo...</p>
-            <p><small>Se não redirecionou automaticamente, <a href="${deepLink}">clique aqui</a></small></p>
-          </div>
-          <script>
-            setTimeout(() => {
-              window.location.href = '${deepLink}';
-            }, 2000);
-          </script>
-        </body>
-        </html>
-      `;
-      
-      res.setHeader('Content-Type', 'text/html');
-      res.send(html);
-      
-    } catch (error) {
-      console.error('Erro no callback:', error);
-      res.status(500).json({ error: 'Erro interno do servidor' });
+async handleCallback(@Query('code') code: string, @Query('state') state: string, @Res() res: Response) {
+  try {
+    if (!code) {
+      return res.status(400).json({ error: 'Código não fornecido' });
     }
+
+    // Verifica se é mobile (User-Agent ou outro mecanismo)
+    const isMobile = false; // agora sempre falso — app mobile não deve passar aqui
+
+    if (isMobile) {
+      const deepLink = `musicbox://callback?code=${code}&state=${state}`;
+      return res.redirect(deepLink);
+    }
+
+    // Caso contrário (web), renderiza a página com link
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Autenticação Spotify</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+          body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+          .container { max-width: 400px; margin: 0 auto; }
+          .success { color: #28a745; }
+          .loading { color: #007bff; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h1 class="success">✅ Autenticação realizada!</h1>
+          <p class="loading">Agora você pode fechar esta página.</p>
+        </div>
+      </body>
+      </html>
+    `;
+
+    res.setHeader('Content-Type', 'text/html');
+    res.send(html);
+
+  } catch (error) {
+    console.error('Erro no callback:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
   }
+}
 
   @Post('spotify/save-user')
   async saveSpotifyUser(@Body() body: { accessToken: string; refreshToken?: string }) {
