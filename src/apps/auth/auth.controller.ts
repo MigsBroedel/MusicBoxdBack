@@ -22,12 +22,14 @@ export class AuthController {
 
   @Get('callback')
   async handleCallbackGet(@Query('code') code: string, @Res() res: Response) {
+    console.log('Recebido code:', code);
     const tokens = await this.authService.getToken(code);
     return res.json(tokens);
   }
 
     @Post('callback')
   async handleCallbackPost(@Body('code') code: string, @Res() res: Response) {
+    console.log('Recebido code:', code);
     try {
       const tokens = await this.authService.getToken(code);
       return res.json(tokens);
