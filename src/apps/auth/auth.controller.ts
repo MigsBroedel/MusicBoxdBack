@@ -13,17 +13,18 @@ interface SpotifyUser {
 export class AuthController {
 
 @Get('callback')
-  async handleCallback(@Query('code') code: string, @Query('state') state: string, @Res() res: Response) {
-    const redirectUri = 'https://auth.expo.io/@MigsBroedel/MusicBox'; // OU use process.env
+async handleCallback(@Query('code') code: string, @Query('state') state: string, @Res() res: Response) {
+  const expoRedirect = global['stateMap']?.[state] || 'https://auth.expo.io/@migsbroed/musicbox';
 
-    if (!code) {
-      return res.status(400).json({ error: 'Código não fornecido' });
-    }
-
-    // redireciona corretamente para o proxy do Expo
-    const deepLink = `${redirectUri}?code=${code}&state=${state}`;
-    return res.redirect(deepLink);
+  if (!code) {
+    return res.status(400).json({ error: 'Código não fornecido' });
   }
+
+  // Agora redireciona para o proxy do Expo com o code
+  const deepLink = `${expoRedirect}?code=${code}&state=${state}`;
+  return res.redirect(deepLink);
+}
+
 
   @Post('spotify/save-user')
   async saveSpotifyUser(@Body() body: { accessToken: string; refreshToken?: string }) {
@@ -72,18 +73,25 @@ export class AuthController {
     }
   }
 
-  @Get('login')
-  async login(@Query('redirect_uri') redirectUri: string, @Res() res: Response) {
-    const state = Math.random().toString(36).substring(2);
-    const params = new URLSearchParams({
-      response_type: 'code',
-      client_id: process.env.SPOTIFY_CLIENT_ID || 'f1279cc7c8c246f49bad620c58811730',
-      scope: 'user-read-email user-read-private',
-      redirect_uri: redirectUri,
-      state,
-    });
-    return res.redirect(`https://accounts.spotify.com/authorize?${params.toString()}`);
-  }
+@Get('login')
+async login(@Query('redirect_uri') redirectUri: string, @Res() res: Response) {
+  const state = Math.random().toString(36).substring(2);
+
+  const params = new URLSearchParams({
+    response_type: 'code',
+    client_id: process.env.SPOTIFY_CLIENT_ID || 'f1279cc7c8c246f49bad620c58811730',
+    scope: 'user-read-email user-read-private',
+    redirect_uri: `${process.env.BACKEND_URL}/auth/callback`, // ⚠️ Redireciona para backend
+    state,
+  });
+
+  // ⚠️ Armazene esse redirect_uri real (do frontend) com o state para usar depois (em memória ou cache)
+  global['stateMap'] ??= {};
+  global['stateMap'][state] = redirectUri;
+
+  return res.redirect(`https://accounts.spotify.com/authorize?${params.toString()}`);
+}
+
 
 
   @Post('spotify/refresh')
