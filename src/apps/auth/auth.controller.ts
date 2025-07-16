@@ -107,6 +107,19 @@ async handleCallback(@Query('code') code: string, @Query('state') state: string,
     }
   }
 
+  @Get('login')
+  async login(@Query('redirect_uri') redirectUri: string, @Res() res: Response) {
+    const state = Math.random().toString(36).substring(2);
+    const params = new URLSearchParams({
+      response_type: 'code',
+      client_id: process.env.SPOTIFY_CLIENT_ID || 'f1279cc7c8c246f49bad620c58811730',
+      scope: 'user-read-email user-read-private',
+      redirect_uri: redirectUri,
+      state,
+    });
+    return res.redirect(`https://accounts.spotify.com/authorize?${params.toString()}`);
+  }
+
   @Post('spotify/refresh')
   async refreshToken(@Body() body: { refreshToken: string }) {
     try {
