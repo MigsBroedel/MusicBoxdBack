@@ -44,7 +44,7 @@ export class AuthController {
         querystring.stringify({
           grant_type: 'authorization_code',
           code: code,
-          redirect_uri: "musicbox://callback",
+          redirect_uri: "exp://192.168.15.9:8081",
           client_id: "f1279cc7c8c246f49bad620c58811730",
           client_secret: "1891040bbc274ff4b9cdc5915d859cc0",
         }),
