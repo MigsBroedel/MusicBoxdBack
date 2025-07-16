@@ -14,7 +14,7 @@ export class AuthController {
 
 @Get('callback')
   async handleCallback(@Query('code') code: string, @Query('state') state: string, @Res() res: Response) {
-    const redirectUri = 'https://auth.expo.io/@MigsBroedel/MusicBox'; // OU use process.env
+    const redirectUri = 'https://auth.expo.io/@migsbroed/musicbox'; // OU use process.env
 
     if (!code) {
       return res.status(400).json({ error: 'Código não fornecido' });
