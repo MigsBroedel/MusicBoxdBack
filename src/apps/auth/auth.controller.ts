@@ -32,22 +32,21 @@ export class AuthController {
   }
 
 
-  @Get('callback')
+  @Post('callback')
   async handleCallback(
-    @Query('code') code: string,
-    @Query('state') state: string,
+    @Body() body: { code: string; codeVerifier: string },
     @Res() res: Response,
   ) {
     try {
       const tokenResponse = await axios.post(
         'https://accounts.spotify.com/api/token',
         querystring.stringify({
-          grant_type: 'authorization_code',
-          code: code,
-          redirect_uri: "exp://192.168.15.9:8081",
-          client_id: "f1279cc7c8c246f49bad620c58811730",
-          client_secret: "1891040bbc274ff4b9cdc5915d859cc0",
-        }),
+        grant_type: 'authorization_code',
+        code: body.code,
+        redirect_uri: "musicbox://callback",
+        client_id: "f1279cc7c8c246f49bad620c58811730",
+        code_verifier: body.codeVerifier,
+      }),
         {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
