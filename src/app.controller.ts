@@ -16,20 +16,24 @@ export class AppController {
 
   @Get('colors')
   async getColors(@Query('url') url: string, @Res() res: Response) {
-  if (!url) {
-    throw new HttpException('Image URL is required', HttpStatus.BAD_REQUEST);
-  }
+    if (!url) {
+      throw new HttpException('Image URL is required', HttpStatus.BAD_REQUEST);
+    }
 
-  try {
-    const response = await axios.get(url, { responseType: 'arraybuffer' });
-    const buffer = Buffer.from(response.data, 'binary');
-    const palette = await ColorThief.getPaletteFromBuffer(buffer, 5);
-    res.json({ palette });
-  } catch (err) {
-    console.error(err.message);
-    throw new HttpException('Erro ao processar imagem', HttpStatus.INTERNAL_SERVER_ERROR);
+    try {
+      // Faz o download da imagem protegida (como a do Spotify)
+      const response = await axios.get(url, { responseType: 'arraybuffer' });
+      const buffer = Buffer.from(response.data, 'binary');
+
+      // Extrai as cores usando o buffer
+      const palette = await ColorThief.getPaletteFromBuffer(buffer, 5);
+
+      return res.json({ palette });
+    } catch (err) {
+      console.error('Erro ao processar imagem:', err.message || err);
+      throw new HttpException('Erro ao processar imagem', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
-}
 
 
 }
