@@ -2,8 +2,12 @@ import { Controller, Get } from '@nestjs/common';
 import { AppService } from './app.service';
 import { Query, Res, HttpException, HttpStatus } from '@nestjs/common';
 import { Response } from 'express';
-import ColorThief from 'colorthief';
 import axios from 'axios';
+
+
+const ColorThief = require('colorthief');
+const colorThief = new ColorThief();
+
 
 @Controller()
 export class AppController {
@@ -21,13 +25,10 @@ export class AppController {
     }
 
     try {
-      // Faz o download da imagem protegida (como a do Spotify)
       const response = await axios.get(url, { responseType: 'arraybuffer' });
       const buffer = Buffer.from(response.data, 'binary');
 
-      // Extrai as cores usando o buffer
-      const palette = await ColorThief.getPaletteFromBuffer(buffer, 5);
-
+      const palette = await colorThief.getPaletteFromBuffer(buffer, 5);
       return res.json({ palette });
     } catch (err) {
       console.error('Erro ao processar imagem:', err.message || err);
