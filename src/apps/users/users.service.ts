@@ -36,6 +36,18 @@ export class UsersService {
     return finded;
   }
 
+  async findBySpotifyID (uid: string): Promise<User> {
+    const finded = await this.usersRepo.findOne({
+      where: {
+        spotifyID: uid
+      }
+    });
+    if (finded == null) {
+      throw new Error
+    }
+    return finded
+  }
+
   async update(id: string, updateUserDto: UpdateUserDto) {
     await this.usersRepo.update(id, updateUserDto);
     return this.usersRepo.find({
