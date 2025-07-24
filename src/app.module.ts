@@ -12,7 +12,7 @@ import { FollowingModule } from './apps/following/following.module';
   imports: [
     TypeOrmModule.forRoot({
           type: 'postgres',
-          url: 'postgresql://postgres:Kelemi332!@db.lwsdzhcwjbmwpxqzjdec.supabase.co:5432/postgres',
+          url: 'postgresql://musicbox_postgres_user:1GEg9QfcxpjjAdF6AESxAzSBHJzbt0ea@dpg-d216rb2li9vc739lngb0-a.oregon-postgres.render.com/musicbox_postgres',
           ssl: {
           rejectUnauthorized: false, 
           },
