@@ -22,11 +22,11 @@ export class UsersController {
     return this.usersService.findBySpotifyID(id);
   }
 
-  @Post('logProcess/:spotifyId')
+  @Post('logProcess/:spotifyID')
   async findOrCreate(
-  @Param('spotifyID') spotifyID: string,
-  @Query('name') name?: string,
-) {
+    @Param('spotifyID') spotifyID: string,
+    @Query('name') name?: string,
+  ) {
   let user = await this.usersService.findBySpotifyID(spotifyID);
 
   if (!user) {
