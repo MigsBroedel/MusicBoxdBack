@@ -20,7 +20,7 @@ export class ReviewService {
       });
     }
   
-    async findOne(uid: string): Promise<Review> {
+  async findOne(uid: string): Promise<Review> {
       const finded = await this.reviewsRepo.findOne({
         where: {
           id: uid
@@ -30,12 +30,36 @@ export class ReviewService {
         throw new Error
       }
       return finded;
-    }
+  }
+
+  async findBySpotifyId(id: string): Promise<Review[]> {
+    const finded = await this.reviewsRepo.find({
+        where: {
+          albumid: id
+        }
+      });
+      if (finded == null) {
+        throw new Error
+      }
+      return finded;
+  }
+
+  async findByUserId(uid: string): Promise<Review[]> {
+    const finded = await this.reviewsRepo.find({
+        where: {
+          user: { id: uid }
+        }
+      });
+      if (finded == null) {
+        throw new Error
+      }
+      return finded;
+  }
 
     // fazer find por nome e id de usuario depois
 
   
-    async remove(id: string) {
+  async remove(id: string) {
       const result = await this.reviewsRepo.delete(id);
   
         if (result.affected === 0) {

@@ -21,6 +21,16 @@ export class ReviewController {
     return this.reviewService.findOne(id);
   }
 
+  @Get('user/:uid')
+  findByUserId(@Param('uid') uid: string) {
+    return this.reviewService.findByUserId(uid);
+  }
+
+  @Get('album/:id')
+  findBySpotifyId(@Param('id') id: string) {
+    return this.reviewService.findBySpotifyId(id);
+  }
+
 
 
   @Delete(':id')

@@ -7,6 +7,7 @@ import { ReviewModule } from './apps/review/review.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './apps/users/users.module';
 import { FollowingModule } from './apps/following/following.module';
+import { CloudinaryModule } from './apps/cloudinary/cloudinary.module';
 
 @Module({
   imports: [
@@ -30,7 +31,8 @@ import { FollowingModule } from './apps/following/following.module';
     AuthModule,
     UsersModule,
     ReviewModule,
-    FollowingModule
+    FollowingModule,
+    CloudinaryModule
   ],
   controllers: [AppController],
   providers: [AppService],
