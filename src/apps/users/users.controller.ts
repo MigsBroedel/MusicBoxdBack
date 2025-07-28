@@ -25,7 +25,7 @@ export class UsersController {
     return this.usersService.findAll();
   }
 
-  @Get(':spotifyID')
+  @Get('spotifySearch/:spotifyID')
   findOneBySpotifyID(@Param('spotifyID') id: string) {
     return this.usersService.findBySpotifyID(id);
   }
