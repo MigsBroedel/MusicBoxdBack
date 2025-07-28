@@ -17,6 +17,14 @@ export class UsersController {
     return this.usersService.findAll();
   }
 
+  @Get()
+  findByName(@Query('name') name: string) {
+    if (name) {
+      return this.usersService.findByName(name);
+    }
+    return this.usersService.findAll();
+  }
+
   @Get(':spotifyID')
   findOneBySpotifyID(@Param('spotifyID') id: string) {
     return this.usersService.findBySpotifyID(id);

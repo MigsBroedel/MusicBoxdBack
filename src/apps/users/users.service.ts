@@ -3,7 +3,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
-import { Repository } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 
 @Injectable()
 export class UsersService {
@@ -22,6 +22,14 @@ export class UsersService {
     return this.usersRepo.find({
       
     });
+  }
+
+  async findByName (name: string) {
+    return this.usersRepo.find({
+    where: {
+      name: ILike(`%${name}%`)
+    }
+  });
   }
 
   async findOne(uid: string): Promise<User> {
