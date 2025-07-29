@@ -22,11 +22,11 @@ export class User {
   @Column({ nullable: true })
   pfp: string; // link?
 
-  @Column("uuid", { array: true, nullable: true })
+  @Column("text", { array: true, nullable: true })
   favoriteAlbums: string[];
 
-  @Column("uuid", { array: true, nullable: true })
-  favoriteArtists: string[];
+  @Column("text", { array: true, nullable: true })
+  favoriteArtists: string[];  
 
   @OneToMany(() => Review, (review) => review.user)
   reviews: Review[];
