@@ -27,11 +27,11 @@ export class CreateUserDto {
 
   @IsOptional()
   @IsArray()
-  @IsUUID('all', { each: true })
+
   favoriteAlbums?: string[];
 
   @IsOptional()
   @IsArray()
-  @IsUUID('all', { each: true })
+
   favoriteArtists?: string[];
 }
