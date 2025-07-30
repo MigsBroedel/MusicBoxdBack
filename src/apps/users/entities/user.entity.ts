@@ -28,7 +28,7 @@ export class User {
   @Column("text", { array: true, nullable: true })
   favoriteArtists: string[];  
 
-  @OneToMany(() => Review, (review) => review.user)
+  @OneToMany(() => Review, (review) => review.userid)
   reviews: Review[];
 
   @OneToMany(() => Follow, (follow) => follow.following)

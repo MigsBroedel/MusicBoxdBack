@@ -8,7 +8,7 @@ export class Review {
   id: string;
 
   @ManyToOne(() => User, (user) => user.reviews)
-  user: User;
+  userid: User;
 
   @Column()
   albumid: string; // id do Spotify
