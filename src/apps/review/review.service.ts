@@ -3,6 +3,7 @@ import { CreateReviewDto } from './dto/create-review.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Review } from './entities/review.entity';
 import { Repository } from 'typeorm';
+import { MoreThan } from 'typeorm';
 import { User } from '../users/entities/user.entity';
 
 @Injectable()
@@ -71,6 +72,20 @@ export class ReviewService {
 }
 
     // fazer find por nome e id de usuario depois
+
+  async findByFollowing(followingIds: string[]): Promise<Review[]> {
+  const oneDayAgo = new Date();
+  oneDayAgo.setHours(oneDayAgo.getHours() - 24);
+
+  return await this.reviewsRepo.find({
+    where: followingIds.map((id) => ({
+      userid: { id },
+      createdAt: MoreThan(oneDayAgo),
+    })),
+    relations: ['userid'],
+    order: { createdAt: 'DESC' },
+  });
+}
 
   
   async remove(id: string) {

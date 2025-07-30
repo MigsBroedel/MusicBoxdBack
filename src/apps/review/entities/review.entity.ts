@@ -1,5 +1,5 @@
 
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn } from 'typeorm';
 import { User } from 'src/apps/users/entities/user.entity';
 
 @Entity()
@@ -21,4 +21,7 @@ export class Review {
 
   @Column({ type: 'text' })
   text: string;
+
+  @CreateDateColumn()
+  createdAt: Date;
 }
