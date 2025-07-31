@@ -7,7 +7,7 @@ export class ReviewController {
   constructor(private readonly reviewService: ReviewService) {}
 
 
-  @Get('from-following')
+  @Post('from-following')
   getReviewsFromFollowing(@Body() body: { followingIds: string[] }) {
     return this.reviewService.findByFollowing(body.followingIds);
   }
