@@ -74,6 +74,10 @@ export class ReviewService {
     // fazer find por nome e id de usuario depois
 
   async findByFollowing(followingIds: string[]): Promise<Review[]> {
+  if (!Array.isArray(followingIds) || followingIds.length === 0) {
+    return [];
+  }
+
   const oneDayAgo = new Date();
   oneDayAgo.setHours(oneDayAgo.getHours() - 24);
 
@@ -85,7 +89,7 @@ export class ReviewService {
     relations: ['userid'],
     order: { createdAt: 'DESC' },
   });
-}
+  }
 
   
   async remove(id: string) {
