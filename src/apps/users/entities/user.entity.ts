@@ -28,7 +28,7 @@ export class User {
   @Column("text", { array: true, nullable: true })
   favoriteArtists: string[];  
 
-  @OneToMany(() => Review, (review) => review.userid)
+  @OneToMany(() => Review, (review) => review.user) // Mudou de 'userid' para 'user'
   reviews: Review[];
 
   @OneToMany(() => Follow, (follow) => follow.following)
@@ -36,5 +36,4 @@ export class User {
 
   @OneToMany(() => Follow, (follow) => follow.follower)
   following: Follow[];
-
 }

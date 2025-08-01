@@ -6,13 +6,11 @@ import { CreateReviewDto } from './dto/create-review.dto';
 export class ReviewController {
   constructor(private readonly reviewService: ReviewService) {}
 
-
   @Post('from-following')
   getReviewsFromFollowing(@Body() body: { followingIds: string[] }) {
     return this.reviewService.findByFollowing(body.followingIds);
   }
 
-  
   @Post()
   create(@Body() createReviewDto: CreateReviewDto) {
     return this.reviewService.create(createReviewDto);
@@ -21,11 +19,6 @@ export class ReviewController {
   @Get()
   findAll() {
     return this.reviewService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.reviewService.findOne(id);
   }
 
   @Get('user/:uid')
@@ -38,10 +31,10 @@ export class ReviewController {
     return this.reviewService.findBySpotifyId(id);
   }
 
-
-  
-
-
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.reviewService.findOne(id);
+  }
 
   @Delete(':id')
   remove(@Param('id') id: string) {

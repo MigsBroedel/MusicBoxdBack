@@ -35,22 +35,32 @@ export class FollowingService {
   }
 
   async getFollowers(userId: string): Promise<User[]> {
-  const follows = await this.followRepo.find({
-    where: { followingId: userId },
-    relations: ['follower'],
-  });
+    const follows = await this.followRepo.find({
+      where: { followingId: userId },
+      relations: ['follower'],
+    });
 
-  return follows.map(f => f.follower);
-}
+    return follows.map(f => f.follower);
+  }
 
   async getFollowing(userId: string): Promise<User[]> {
-  const follows = await this.followRepo.find({
-    where: { followerId: userId },
-    relations: ['following'],
-  });
+    const follows = await this.followRepo.find({
+      where: { followerId: userId },
+      relations: ['following'],
+    });
 
-  return follows.map(f => f.following);
-}
+    return follows.map(f => f.following);
+  }
+
+  // Nova função helper para pegar apenas os IDs das pessoas que o usuário segue
+  async getFollowingIds(userId: string): Promise<string[]> {
+    const follows = await this.followRepo.find({
+      where: { followerId: userId },
+      select: ['followingId'], // Seleciona apenas o campo followingId
+    });
+
+    return follows.map(f => f.followingId);
+  }
 
   async countFollowers(userId: string): Promise<number> {
     return await this.followRepo.count({
@@ -63,6 +73,4 @@ export class FollowingService {
       where: { followerId: userId },
     });
   }
-
-
 }

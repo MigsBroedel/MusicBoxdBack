@@ -12,12 +12,7 @@ export class UsersController {
     return this.usersService.create(createUserDto);
   }
 
-  @Get()
-  findAll() {
-    return this.usersService.findAll();
-  }
-
-  @Get()
+  @Get('search')
   findByName(@Query('name') name: string) {
     if (name) {
       return this.usersService.findByName(name);
@@ -35,18 +30,23 @@ export class UsersController {
     @Param('spotifyID') spotifyID: string,
     @Query('name') name?: string,
   ) {
-  let user = await this.usersService.findBySpotifyID(spotifyID);
+    let user = await this.usersService.findBySpotifyID(spotifyID);
 
-  if (!user) {
-    user = await this.usersService.create({
-      name: name || 'Desconhecido',
-      spotifyID,
-      colors: '#fff'
-    });
+    if (!user) {
+      user = await this.usersService.create({
+        name: name || 'Desconhecido',
+        spotifyID,
+        colors: '#fff'
+      });
+    }
+
+    return user;
   }
 
-  return user;
-}
+  @Get()
+  findAll() {
+    return this.usersService.findAll();
+  }
 
   @Get(':id')
   findOne(@Param('id') id: string) {

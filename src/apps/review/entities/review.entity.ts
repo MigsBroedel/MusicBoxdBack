@@ -1,4 +1,3 @@
-
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn } from 'typeorm';
 import { User } from 'src/apps/users/entities/user.entity';
 
@@ -8,7 +7,7 @@ export class Review {
   id: string;
 
   @ManyToOne(() => User, (user) => user.reviews)
-  userid: User;
+  user: User; // Mudou de 'userid' para 'user'
 
   @Column()
   albumid: string; // id do Spotify
