@@ -43,7 +43,7 @@ export class AuthController {
         querystring.stringify({
         grant_type: 'authorization_code',
         code: body.code,
-        redirect_uri: "exp://192.168.15.9:8081",
+        redirect_uri: "musicbox://login",
         client_id: "f1279cc7c8c246f49bad620c58811730",
         code_verifier: body.codeVerifier,
       }),
