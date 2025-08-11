@@ -26,22 +26,22 @@ export class UsersController {
   }
 
   @Post('logProcess/:spotifyID')
-  async findOrCreate(
-    @Param('spotifyID') spotifyID: string,
-    @Query('name') name?: string,
-  ) {
-    let user = await this.usersService.findBySpotifyID(spotifyID);
+async findOrCreate(
+  @Param('spotifyID') spotifyID: string,
+  @Query('name') name?: string,
+) {
+  let user = await this.usersService.findBySpotifyID(spotifyID);
 
-    if (!user) {
-      user = await this.usersService.create({
-        name: name || 'Desconhecido',
-        spotifyID,
-        colors: '#fff'
-      });
-    }
-
-    return user;
+  if (!user) {
+    user = await this.usersService.create({
+      name: name || 'Desconhecido',
+      spotifyID,
+      colors: '#fff'
+    });
   }
+
+  return user;
+}
 
   @Get()
   findAll() {

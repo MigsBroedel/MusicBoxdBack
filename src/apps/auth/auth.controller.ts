@@ -22,7 +22,7 @@ export class AuthController {
       response_type: 'code',
       client_id: "f1279cc7c8c246f49bad620c58811730",
       scope: scope,
-      redirect_uri: "musicbox://callback",
+      redirect_uri: "musicbox://login",
       state: 'algum_state_aleatorio_opcional', // use para prevenir CSRF
     });
 
