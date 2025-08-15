@@ -80,7 +80,7 @@ export class AuthController {
       const { access_token, refresh_token, expires_in } = tokenResponse.data;
 
       console.log('✅ Tokens obtidos com sucesso', {
-        access_token: access_token.substring(0, 30) + '...',
+        access_token: access_token,
         refresh_token: refresh_token.substring(0, 30) + '...',
         expires_in
       });
