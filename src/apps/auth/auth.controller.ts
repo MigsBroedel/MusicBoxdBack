@@ -57,12 +57,10 @@ export class AuthController {
         client_id: this.CLIENT_ID,
       };
 
-      // Se tem code_verifier, usa PKCE
       if (body.codeVerifier) {
-        tokenData.code_verifier = body.codeVerifier;
-      } else if (this.CLIENT_SECRET) {
-        // Se não tem PKCE mas tem client secret
-        tokenData.client_secret = this.CLIENT_SECRET;
+        tokenData.code_verifier = body.codeVerifier; // PKCE
+      } else {
+        tokenData.client_secret = this.CLIENT_SECRET; // Sem PKCE
       }
 
       const tokenResponse = await axios.post(
@@ -72,7 +70,7 @@ export class AuthController {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
           },
-          timeout: 10000, // 10 segundos de timeout
+          timeout: 5000, // 5 segundos de timeout
         },
       );
 
