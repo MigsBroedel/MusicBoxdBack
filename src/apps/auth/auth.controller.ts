@@ -35,11 +35,10 @@ export class AuthController {
   async handleCallback(
     @Body() body: { code: string; codeVerifier?: string },
     @Res() res: Response,
-    @Query('code') queryCode?: string,
   ) {
     try {
-      // Aceita código do body ou query params
-      const code = body.code || queryCode;
+
+      const code = body.code;
       
       if (!code) {
         throw new BadRequestException('Código de autorização não fornecido');
