@@ -31,50 +31,67 @@ export class AuthController {
   }
 
   @Post('callback')
-async handleCallback(
-  @Body() body: { code: string; codeVerifier?: string },
-  @Res() res: Response,
-) {
-  try {
-    if (!body.code) {
-      throw new BadRequestException('Código de autorização não fornecido');
+  async handleCallback(
+    @Body() body: { code: string },
+    @Res() res: Response,
+  ) {
+    try {
+      const code = body.code;
+
+      if (!code) {
+        throw new BadRequestException('Código de autorização não fornecido');
+      }
+
+      console.log('🔄 Trocando código por tokens...', { code: code.substring(0, 20) + '...' });
+
+      // Authorization Code tradicional com client_secret
+      const tokenData = {
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: this.REDIRECT_URI,
+        client_id: this.CLIENT_ID,
+        client_secret: this.CLIENT_SECRET,
+      };
+
+      const tokenResponse = await axios.post(
+        'https://accounts.spotify.com/api/token',
+        querystring.stringify(tokenData),
+        { headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, timeout: 5000 },
+      );
+
+      const { access_token, refresh_token, expires_in } = tokenResponse.data;
+
+      console.log('✅ Tokens obtidos com sucesso', {
+        access_token: access_token.substring(0, 30) + '...',
+        refresh_token: refresh_token ? refresh_token.substring(0, 30) + '...' : null,
+        expires_in,
+      });
+
+      return res.status(HttpStatus.OK).json({
+        message: 'Autenticado com sucesso',
+        access_token,
+        refresh_token,
+        expires_in,
+      });
+    } catch (err) {
+      console.error('❌ Erro ao obter token do Spotify:', {
+        status: err.response?.status,
+        data: err.response?.data,
+        message: err.message,
+      });
+
+      if (err.response?.status === 400) {
+        const errorData = err.response.data;
+        if (errorData.error === 'invalid_grant') {
+          throw new BadRequestException('Código de autorização expirado ou inválido');
+        } else if (errorData.error === 'invalid_client') {
+          throw new BadRequestException('Client ID ou Client Secret inválidos');
+        }
+      }
+
+      throw new InternalServerErrorException('Erro ao autenticar com o Spotify');
     }
-
-    const tokenData: any = {
-      grant_type: 'authorization_code',
-      code: body.code,
-      redirect_uri: this.REDIRECT_URI,
-      client_id: this.CLIENT_ID,
-    };
-
-    if (body.codeVerifier) {
-      // Fluxo PKCE
-      tokenData.code_verifier = body.codeVerifier;
-    } else {
-      // Fluxo tradicional
-      tokenData.client_secret = this.CLIENT_SECRET;
-    }
-
-    const tokenResponse = await axios.post(
-      'https://accounts.spotify.com/api/token',
-      querystring.stringify(tokenData),
-      { headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, timeout: 5000 },
-    );
-
-    const { access_token, refresh_token, expires_in } = tokenResponse.data;
-
-    return res.status(HttpStatus.OK).json({
-      message: 'Autenticado com sucesso',
-      access_token,
-      refresh_token,
-      expires_in,
-    });
-  } catch (err) {
-    console.error('❌ Erro ao obter token do Spotify:', err.response?.data);
-    throw new InternalServerErrorException('Erro ao autenticar com o Spotify');
   }
-}
-
 
   @Post('refresh')
   async refreshToken(
