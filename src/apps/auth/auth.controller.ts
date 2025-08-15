@@ -34,8 +34,8 @@ export class AuthController {
   @Post('callback')
   async handleCallback(
     @Body() body: { code: string; codeVerifier?: string },
-    @Query('code') queryCode?: string, // Suporte para ambos os formatos
-    @Res() res?: Response,
+    @Res() res: Response,
+    @Query('code') queryCode?: string,
   ) {
     try {
       // Aceita código do body ou query params
