@@ -14,8 +14,10 @@ export class AuthController {
   login(@Res() res: Response) {
     const scope = [
       'user-read-email',
-      'user-library-read',
       'user-read-private',
+      'user-library-read',
+      'user-read-playback-state',
+      'user-modify-playback-state',
     ].join(' ');
 
     const queryParams = querystring.stringify({
@@ -31,10 +33,9 @@ export class AuthController {
   }
 
   /**
-   * callback
-   * Recebe: { code, codeVerifier?, redirect_uri? }
-   * - se codeVerifier presente => usa PKCE (não envia client_secret)
-   * - se não => usa Authorization Code tradicional (envia Basic auth header)
+   * Callback corrigido para PKCE
+   * Recebe: { code, codeVerifier, redirect_uri }
+   * Para PKCE: NÃO usar Authorization header, apenas client_id no body
    */
   @Post('callback')
   async handleCallback(
@@ -45,71 +46,154 @@ export class AuthController {
       const { code, codeVerifier, redirect_uri } = body || {};
 
       if (!code) {
-        return res.status(HttpStatus.BAD_REQUEST).json({ error: 'code_missing', message: 'Código de autorização não fornecido' });
+        return res.status(HttpStatus.BAD_REQUEST).json({ 
+          error: 'code_missing', 
+          message: 'Código de autorização não fornecido' 
+        });
+      }
+
+      if (!codeVerifier) {
+        return res.status(HttpStatus.BAD_REQUEST).json({ 
+          error: 'code_verifier_missing', 
+          message: 'Code verifier é obrigatório para PKCE' 
+        });
       }
 
       const finalRedirectUri = redirect_uri || this.REDIRECT_URI;
-      const usingPkce = !!codeVerifier;
 
-      console.log('🔄 Trocando código por tokens...', {
+      console.log('🔄 Iniciando troca de código por tokens (PKCE)...', {
         codePreview: code.substring(0, 20) + '...',
-        usingPkce,
+        verifierPreview: codeVerifier.substring(0, 20) + '...',
         redirect_uri: finalRedirectUri,
       });
 
-      // Monta body da requisição pro /api/token
-      const tokenPayload: any = {
+      // Payload para PKCE - CRÍTICO: não usar Authorization header
+      const tokenPayload = {
         grant_type: 'authorization_code',
         code,
         redirect_uri: finalRedirectUri,
+        client_id: this.CLIENT_ID, // client_id vai no body para PKCE
+        code_verifier: codeVerifier, // obrigatório para PKCE
       };
 
-      const headers: Record<string, string> = {
+      // Headers para PKCE - CRÍTICO: apenas Content-Type, sem Authorization
+      const headers = {
         'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json',
       };
 
-      if (usingPkce) {
-        // PKCE flow (mobile, expo) -> enviar code_verifier e client_id (sem client_secret)
-        tokenPayload.client_id = this.CLIENT_ID;
-        tokenPayload.code_verifier = codeVerifier;
-      } else {
-        // Traditional flow -> envia Basic Auth header (mais seguro) e client_id no payload
-        tokenPayload.client_id = this.CLIENT_ID;
-        const basic = Buffer.from(`${this.CLIENT_ID}:${this.CLIENT_SECRET}`).toString('base64');
-        headers['Authorization'] = `Basic ${basic}`;
-      }
+      console.log('📤 Enviando requisição para Spotify:', {
+        url: 'https://accounts.spotify.com/api/token',
+        payload: {
+          ...tokenPayload,
+          code: tokenPayload.code.substring(0, 20) + '...',
+          code_verifier: tokenPayload.code_verifier.substring(0, 20) + '...',
+        },
+        headers,
+      });
 
       const tokenResponse = await axios.post(
         'https://accounts.spotify.com/api/token',
         querystring.stringify(tokenPayload),
-        { headers, timeout: 10000 }
+        { 
+          headers, 
+          timeout: 15000,
+          validateStatus: (status) => status < 500, // Aceita erros 4xx para melhor debug
+        }
       );
+
+      if (tokenResponse.status !== 200) {
+        console.error('❌ Spotify retornou erro:', {
+          status: tokenResponse.status,
+          data: tokenResponse.data,
+        });
+        
+        return res.status(tokenResponse.status).json({ 
+          error: 'spotify_token_error',
+          spotify_error: tokenResponse.data,
+          message: 'Falha ao obter token do Spotify'
+        });
+      }
 
       const { access_token, refresh_token, expires_in, scope } = tokenResponse.data;
 
+      // Validar se recebemos os tokens necessários
+      if (!access_token) {
+        console.error('❌ Access token não recebido:', tokenResponse.data);
+        return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+          error: 'invalid_token_response',
+          message: 'Access token não foi retornado pelo Spotify',
+          spotify_response: tokenResponse.data,
+        });
+      }
+
       console.log('✅ Tokens obtidos com sucesso', {
-        access_token_preview: access_token ? access_token.substring(0, 30) + '...' : null,
-        refresh_token_preview: refresh_token ? refresh_token.substring(0, 30) + '...' : null,
+        access_token_length: access_token?.length,
+        refresh_token_length: refresh_token?.length,
         expires_in,
         scope,
       });
 
+      // Opcionalmente, validar o token fazendo uma chamada à API do Spotify
+      try {
+        const userResponse = await axios.get('https://api.spotify.com/v1/me', {
+          headers: { Authorization: `Bearer ${access_token}` },
+          timeout: 10000,
+        });
+        
+        console.log('✅ Token validado com sucesso:', {
+          user_id: userResponse.data.id,
+          display_name: userResponse.data.display_name,
+        });
+      } catch (validationError: any) {
+        console.error('⚠️ Falha na validação do token:', validationError.response?.data);
+        // Não retornar erro aqui, pois o token pode estar válido mesmo assim
+      }
+
       return res.status(HttpStatus.OK).json({
-        message: 'Autenticado com sucesso',
+        message: 'Autenticação realizada com sucesso',
         access_token,
         refresh_token,
         expires_in,
         scope,
+        token_type: 'Bearer',
       });
+
     } catch (err: any) {
-      // Se for erro do axios (Spotify respondeu com status), repassa o body e status
-      const status = err.response?.status || 500;
-      const data = err.response?.data || { message: err.message };
+      console.error('❌ Erro crítico no callback:', {
+        message: err.message,
+        status: err.response?.status,
+        data: err.response?.data,
+        stack: err.stack?.split('\n').slice(0, 3), // Primeiras 3 linhas do stack
+      });
 
-      console.error('❌ Erro ao obter token do Spotify:', { status, data });
+      // Se for erro do axios (resposta do Spotify)
+      if (err.response) {
+        const status = err.response.status;
+        const data = err.response.data;
+        
+        return res.status(status).json({ 
+          error: 'spotify_api_error',
+          spotify_error: data,
+          message: `Erro do Spotify: ${data.error_description || data.error || 'Erro desconhecido'}`
+        });
+      }
 
-      // Repassa a resposta do Spotify pra facilitar debug no frontend
-      return res.status(status).json({ spotify_error: data });
+      // Erro de rede ou timeout
+      if (err.code === 'ENOTFOUND' || err.code === 'ECONNABORTED') {
+        return res.status(HttpStatus.REQUEST_TIMEOUT).json({
+          error: 'network_error',
+          message: 'Falha de conectividade com o Spotify',
+          details: err.message,
+        });
+      }
+
+      // Outros erros
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+        error: 'internal_error',
+        message: 'Erro interno do servidor',
+        details: err.message,
+      });
     }
   }
 
@@ -120,18 +204,22 @@ export class AuthController {
   ) {
     try {
       const { refresh_token } = body || {};
+      
       if (!refresh_token) {
-        return res.status(HttpStatus.BAD_REQUEST).json({ error: 'refresh_missing', message: 'Refresh token não fornecido' });
+        return res.status(HttpStatus.BAD_REQUEST).json({ 
+          error: 'refresh_missing', 
+          message: 'Refresh token não fornecido' 
+        });
       }
 
-      console.log('🔄 Renovando access token...', { refresh_preview: refresh_token.substring(0, 30) + '...' });
+      console.log('🔄 Renovando access token...');
 
-      const tokenPayload: any = {
+      const tokenPayload = {
         grant_type: 'refresh_token',
         refresh_token,
       };
 
-      // Para refresh sempre usamos Basic Auth (client_secret)
+      // Para refresh, usar Basic Auth (método tradicional)
       const basic = Buffer.from(`${this.CLIENT_ID}:${this.CLIENT_SECRET}`).toString('base64');
       const headers = {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -146,18 +234,26 @@ export class AuthController {
 
       const { access_token, refresh_token: new_refresh_token, expires_in } = tokenResponse.data;
 
-      console.log('✅ Token renovado com sucesso', { access_preview: access_token?.substring(0, 30) + '...', new_refresh: !!new_refresh_token });
+      console.log('✅ Token renovado com sucesso');
 
       return res.status(HttpStatus.OK).json({
         access_token,
-        refresh_token: new_refresh_token || refresh_token,
+        refresh_token: new_refresh_token || refresh_token, // Spotify pode ou não retornar novo refresh token
         expires_in,
+        token_type: 'Bearer',
       });
+      
     } catch (err: any) {
       const status = err.response?.status || 500;
       const data = err.response?.data || { message: err.message };
+      
       console.error('❌ Erro ao renovar token:', { status, data });
-      return res.status(status).json({ spotify_error: data });
+      
+      return res.status(status).json({ 
+        error: 'refresh_failed',
+        spotify_error: data,
+        message: 'Falha ao renovar token'
+      });
     }
   }
 
@@ -165,7 +261,10 @@ export class AuthController {
   async validateToken(@Query('token') token: string, @Res() res: Response) {
     try {
       if (!token) {
-        return res.status(HttpStatus.BAD_REQUEST).json({ valid: false, error: 'Token não fornecido' });
+        return res.status(HttpStatus.BAD_REQUEST).json({ 
+          valid: false, 
+          error: 'Token não fornecido' 
+        });
       }
 
       const response = await axios.get('https://api.spotify.com/v1/me', {
@@ -173,19 +272,36 @@ export class AuthController {
         timeout: 5000,
       });
 
-      return res.status(HttpStatus.OK).json({ valid: true, user: response.data });
+      return res.status(HttpStatus.OK).json({ 
+        valid: true, 
+        user: {
+          id: response.data.id,
+          display_name: response.data.display_name,
+          email: response.data.email,
+          country: response.data.country,
+        }
+      });
+      
     } catch (err: any) {
       const status = err.response?.status || 500;
       const data = err.response?.data || { message: err.message };
+      
       console.error('❌ Token inválido:', status, data);
-      return res.status(status).json({ valid: false, spotify_error: data });
+      
+      return res.status(status).json({ 
+        valid: false, 
+        spotify_error: data,
+        message: 'Token inválido ou expirado'
+      });
     }
   }
 
   @Get('debug/tokens')
   async debugTokens(@Query('access_token') accessToken: string, @Res() res: Response) {
     if (!accessToken) {
-      return res.status(HttpStatus.BAD_REQUEST).json({ error: 'access_token query param required' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ 
+        error: 'access_token query param required' 
+      });
     }
 
     try {
@@ -200,11 +316,15 @@ export class AuthController {
           display_name: userResponse.data.display_name,
           email: userResponse.data.email,
           country: userResponse.data.country,
+          followers: userResponse.data.followers?.total || 0,
         },
       });
     } catch (err: any) {
       const data = err.response?.data || err.message;
-      return res.status(err.response?.status || 500).json({ token_valid: false, error: data });
+      return res.status(err.response?.status || 500).json({ 
+        token_valid: false, 
+        error: data 
+      });
     }
   }
 
