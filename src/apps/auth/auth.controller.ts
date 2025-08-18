@@ -8,7 +8,7 @@ export class AuthController {
   // --- coloque esses valores em process.env em produção ---
   private readonly CLIENT_ID = 'f1279cc7c8c246f49bad620c58811730';
   private readonly CLIENT_SECRET = 'bd9593f8ffdf44149299889ad2d8c7cd';
-  private readonly REDIRECT_URI = 'exp://192.168.15.9:8081';
+  private readonly REDIRECT_URI = 'musicbox://login';
 
   @Get('login')
   login(@Res() res: Response) {
