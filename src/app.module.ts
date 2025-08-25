@@ -13,7 +13,7 @@ import { CloudinaryModule } from './apps/cloudinary/cloudinary.module';
   imports: [
     TypeOrmModule.forRoot({
           type: 'postgres',
-          url: 'postgresql://musicbox_postgres_user:1GEg9QfcxpjjAdF6AESxAzSBHJzbt0ea@dpg-d216rb2li9vc739lngb0-a.oregon-postgres.render.com/musicbox_postgres',
+          url: 'postgresql://neondb_owner:npg_MdVAy6wjW2Uf@ep-weathered-salad-acqfdaky-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require,
           ssl: {
           rejectUnauthorized: false, 
           },
